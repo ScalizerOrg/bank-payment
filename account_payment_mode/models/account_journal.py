@@ -2,7 +2,7 @@
 # @author: Alexis de Lattre <alexis.delattre@akretion.com>
 # License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl.html).
 
-from odoo import _, api, models
+from odoo import _, api, models, tools
 from odoo.exceptions import ValidationError
 
 
@@ -10,12 +10,18 @@ class AccountJournal(models.Model):
     _inherit = "account.journal"
 
     def _default_outbound_payment_methods(self):
+        if tools.config.get('test_enable'):
+            return super()._default_outbound_payment_methods()
+
         all_out = self.env["account.payment.method"].search(
             [("payment_type", "=", "outbound")]
         )
         return all_out
 
     def _default_inbound_payment_methods(self):
+        if tools.config.get('test_enable'):
+            return super()._default_inbound_payment_methods()
+
         method_info = self.env[
             "account.payment.method"
         ]._get_payment_method_information()

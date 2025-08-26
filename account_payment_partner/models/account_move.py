@@ -94,31 +94,30 @@ class AccountMove(models.Model):
     @api.depends("bank_partner_id", "payment_mode_id")
     def _compute_partner_bank_id(self):
         res = super()._compute_partner_bank_id()
-        if not config.get('test_enable'):
-            for move in self:
-                payment_mode = move.payment_mode_id
-                if payment_mode:
-                    if (
-                        move.move_type == "in_invoice"
-                        and payment_mode.payment_type == "outbound"
-                        and not payment_mode.payment_method_id.bank_account_required
-                    ):
-                        move.partner_bank_id = False
-                        continue
-                    elif move.move_type == "out_invoice":
-                        if payment_mode.payment_method_id.bank_account_required:
-                            if (
-                                payment_mode.bank_account_link == "fixed"
-                                and payment_mode.fixed_journal_id.bank_account_id
-                            ):
-                                move.partner_bank_id = (
-                                    payment_mode.fixed_journal_id.bank_account_id
-                                )
-                                continue
-                        else:
-                            move.partner_bank_id = False
-                else:
+        for move in self:
+            payment_mode = move.payment_mode_id
+            if payment_mode:
+                if (
+                    move.move_type == "in_invoice"
+                    and payment_mode.payment_type == "outbound"
+                    and not payment_mode.payment_method_id.bank_account_required
+                ):
                     move.partner_bank_id = False
+                    continue
+                elif move.move_type == "out_invoice":
+                    if payment_mode.payment_method_id.bank_account_required:
+                        if (
+                            payment_mode.bank_account_link == "fixed"
+                            and payment_mode.fixed_journal_id.bank_account_id
+                        ):
+                            move.partner_bank_id = (
+                                payment_mode.fixed_journal_id.bank_account_id
+                            )
+                            continue
+                    else:
+                        move.partner_bank_id = False
+            else:
+                move.partner_bank_id = False
         return res
 
     @api.depends("line_ids.matched_credit_ids", "line_ids.matched_debit_ids")
